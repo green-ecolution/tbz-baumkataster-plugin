@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/green-ecolution/green-ecolution-backend/client"
 	"github.com/green-ecolution/green-ecolution-backend/plugin"
@@ -96,22 +97,58 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	registerTrees, err := repo.GetTreesPlantedAfter(ctx)
-	if err != nil {
-		panic(err)
+	syncTrees := NewSyncTrees(repo, geClient)
+	scheduler := NewScheduler(10 * time.Second)
+	go func() {
+		defer wg.Done()
+		if err := scheduler.Run(ctx, syncTrees.Sync); err != nil {
+			slog.Error("an error has occurred in syncing trees from tbz tree register to green ecolution backend", "error", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := worker.RunHeartbeat(ctx); err != nil {
+			slog.Error("Failed to send heartbeat", "error", err)
+		}
+	}()
+
+	wg.Wait()
+}
+
+type SyncTrees struct {
+	registerRepo *TreeRegisterRepo
+	client       *GreenEcolutionClient
+}
+
+func NewSyncTrees(repo *TreeRegisterRepo, client *GreenEcolutionClient) *SyncTrees {
+	return &SyncTrees{
+		registerRepo: repo,
+		client:       client,
 	}
+}
 
-	fmt.Println(registerTrees)
+func (s *SyncTrees) Sync(ctx context.Context) error {
+	slog.Info("sync tbz register trees to green ecolution backend")
+	registerTrees, err := s.registerRepo.GetTreesPlantedAfter(ctx)
+	if err != nil {
+		slog.Error("failed to get trees from tbz tree register", "error", err)
+		return nil
+	}
 
 	mapRegisterTrees, err := TreesFromBatch(registerTrees)
 	if err != nil {
-		panic(err)
+		slog.Error("failed to map tbz tree register to internal trees", "error", err)
+		return nil
 	}
 
-	geTrees, err := geClient.GetAll(ctx)
+	geTrees, err := s.client.GetAll(ctx)
 	if err != nil {
-		panic(err)
+		slog.Error("failed to get trees from green ecolution backend", "error", err)
+		return nil
 	}
 
 	slices.SortFunc(mapRegisterTrees, func(a Tree, b Tree) int {
@@ -144,7 +181,7 @@ func main() {
 		geTree := geTrees[idxGeTrees]
 
 		if regTree.TreeRegisterID == geTree.TreeRegisterID {
-			if updatedTree, ok := CheckDiff(regTree, geTree); !ok {
+			if updatedTree, ok := s.checkDiff(regTree, geTree); !ok {
 				updateQueue = append(updateQueue, updatedTree)
 			}
 			idxGeTrees++
@@ -166,36 +203,27 @@ func main() {
 	}
 
 	for _, e := range createdQueue {
-		if err := geClient.Create(ctx, e); err != nil {
+		if err := s.client.Create(ctx, e); err != nil {
 			slog.Warn("failed to create tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID)
 		}
 	}
 
 	for _, e := range updateQueue {
-		if err := geClient.Update(ctx, e.Id, e); err != nil {
+		if err := s.client.Update(ctx, e.Id, e); err != nil {
 			slog.Warn("failed to update tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID, "tree_id", e.Id)
 		}
 	}
 
 	for _, e := range archiveQueue {
-		if err := geClient.Archive(ctx, e.Id); err != nil {
+		if err := s.client.Archive(ctx, e.Id); err != nil {
 			slog.Warn("failed to archive tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID, "tree_id", e.Id)
 		}
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := worker.RunHeartbeat(ctx); err != nil {
-			slog.Error("Failed to send heartbeat", "error", err)
-		}
-	}()
-
-	wg.Wait()
+	return nil
 }
 
-func CheckDiff(new, old Tree) (Tree, bool) {
+func (s *SyncTrees) checkDiff(new, old Tree) (Tree, bool) {
 	if new.Number == old.Number ||
 		new.Latitude == old.Latitude ||
 		new.Longitude == old.Longitude ||
