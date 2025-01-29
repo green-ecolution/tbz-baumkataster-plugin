@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"slices"
 	"sync"
 	"syscall"
 
@@ -14,6 +15,10 @@ import (
 	"github.com/green-ecolution/green-ecolution-backend/plugin"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
+)
+
+const (
+	slug = "tbz-baumkataster"
 )
 
 func main() {
@@ -40,7 +45,7 @@ func main() {
 
 	p := plugin.NewPlugin(
 		plugin.WithName("TBZ Baumkataster"),
-		plugin.WithSlug("tbz-baumkataster"),
+		plugin.WithSlug(slug),
 		plugin.WithVersion("v0.0.1"),
 		plugin.WithHostPath(pluginPath),
 	) // TODO: change to no ptr in backend
@@ -76,7 +81,7 @@ func main() {
 	clientCfg.Debug = true
 	clientCfg.HTTPClient = oauthClient
 
-	geClient := NewGreenEcolutionRepo(clientCfg)
+	geClient := NewGreenEcolutionRepo(clientCfg, slug)
 
 	auth := context.WithValue(ctx, client.ContextOAuth2, oauthToken)
 
@@ -99,22 +104,83 @@ func main() {
 
 	fmt.Println(registerTrees)
 
-	localStorage, err := NewLocalStorageRepo("db.sqlite3")
+	mapRegisterTrees, err := TreesFromBatch(registerTrees)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := localStorage.Setup(ctx); err != nil {
-		panic(err)
-	}
-
-	mapTrees, err := TreesFromBatch(registerTrees)
+	geTrees, err := geClient.GetAll(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := localStorage.Insert(ctx, mapTrees); err != nil {
-		panic(err)
+	slices.SortFunc(mapRegisterTrees, func(a Tree, b Tree) int {
+		return a.TreeRegisterID - b.TreeRegisterID
+	})
+
+	slices.SortFunc(geTrees, func(a Tree, b Tree) int {
+		return a.TreeRegisterID - b.TreeRegisterID
+	})
+
+	createdQueue := make([]Tree, 0)
+	updateQueue := make([]Tree, 0)
+	archiveQueue := make([]Tree, 0)
+
+	idxRegTrees := 0
+	idxGeTrees := 0
+
+	for idxRegTrees < len(mapRegisterTrees) || idxGeTrees < len(geTrees) {
+		if idxRegTrees == len(mapRegisterTrees) {
+			archiveQueue = append(archiveQueue, geTrees[idxRegTrees:]...)
+			break
+		}
+
+		if idxGeTrees == len(geTrees) {
+			createdQueue = append(createdQueue, mapRegisterTrees[idxGeTrees:]...)
+			break
+		}
+
+		regTree := mapRegisterTrees[idxRegTrees]
+		geTree := geTrees[idxGeTrees]
+
+		if regTree.TreeRegisterID == geTree.TreeRegisterID {
+			if updatedTree, ok := CheckDiff(regTree, geTree); !ok {
+				updateQueue = append(updateQueue, updatedTree)
+			}
+			idxGeTrees++
+			idxRegTrees++
+			continue
+		}
+
+		if regTree.TreeRegisterID < geTree.TreeRegisterID {
+			createdQueue = append(createdQueue, regTree)
+			idxRegTrees++
+			continue
+		}
+
+		if regTree.TreeRegisterID > geTree.TreeRegisterID {
+			archiveQueue = append(archiveQueue, geTree)
+			idxGeTrees++
+			continue
+		}
+	}
+
+	for _, e := range createdQueue {
+		if err := geClient.Create(ctx, e); err != nil {
+			slog.Warn("failed to create tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID)
+		}
+	}
+
+	for _, e := range updateQueue {
+		if err := geClient.Update(ctx, e.Id, e); err != nil {
+			slog.Warn("failed to update tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID, "tree_id", e.Id)
+		}
+	}
+
+	for _, e := range archiveQueue {
+		if err := geClient.Archive(ctx, e.Id); err != nil {
+			slog.Warn("failed to archive tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID, "tree_id", e.Id)
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -127,4 +193,22 @@ func main() {
 	}()
 
 	wg.Wait()
+}
+
+func CheckDiff(new, old Tree) (Tree, bool) {
+	if new.Number == old.Number ||
+		new.Latitude == old.Latitude ||
+		new.Longitude == old.Longitude ||
+		new.Species == old.Species ||
+		new.PlantingYear == old.PlantingYear {
+		return new, true
+	} else {
+		old.Number = new.Number
+		old.Latitude = new.Latitude
+		old.Longitude = new.Longitude
+		old.Species = new.Species
+		old.PlantingYear = new.PlantingYear
+
+		return old, false
+	}
 }

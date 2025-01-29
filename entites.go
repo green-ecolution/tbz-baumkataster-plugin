@@ -4,21 +4,17 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/green-ecolution/green-ecolution-backend/client"
 )
 
 type Tree struct {
-	TreeRegisterID       string  `db:"register_id"`
-	GreenEcolutionTreeID int32   `db:"green_ecolution_id"`
-	PlantingYear         int32   `db:"planting_year"`
-	Species              string  `db:"species"`
-	TreeNumber           string  `db:"tree_number"`
-	Latitude             float64 `db:"latitude"`
-	Longitude            float64 `db:"longitude"`
-	Description          string  `db:"description"`
+	client.Tree
+	TreeRegisterID int
 }
 
 type TreeRegister struct {
-	ID           string `db:"OBJECTID"`
+	ID           int    `db:"OBJECTID"`
 	TreeNumber   string `db:"BAUMNUMMER"`
 	Hochwert     string `db:"HOCHWERT"`
 	Rechtswert   string `db:"RECHTSWERT"`
@@ -69,12 +65,14 @@ func TreesFromBatch(register []TreeRegister) ([]Tree, error) {
 	treeSeq := MapIter21(Zip(slices.Values(register), slices.Values(geoPoints)), func(r TreeRegister, g GeoPoint) Tree {
 		return Tree{
 			TreeRegisterID: r.ID,
-			PlantingYear:   int32(r.PlantingYear),
-			Species:        r.Species,
-			TreeNumber:     r.TreeNumber,
-			Description:    r.Region,
-			Latitude:       g.X,
-			Longitude:      g.Y,
+			Tree: client.Tree{
+				PlantingYear: int32(r.PlantingYear),
+				Species:      r.Species,
+				Number:       r.TreeNumber,
+				Description:  r.Region,
+				Latitude:     float32(g.X),
+				Longitude:    float32(g.Y),
+			},
 		}
 	})
 
