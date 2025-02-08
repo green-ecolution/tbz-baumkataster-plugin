@@ -131,3 +131,12 @@ func (r *GreenEcolutionClient) Archive(ctx context.Context, id int32) error {
 	_, err := r.client.TreeAPI.DeleteTree(ctx, id).Execute() // TODO: Archive
 	return err
 }
+
+func (r *GreenEcolutionClient) RefreshToken(ctx context.Context, refreshToken string) (*client.ClientToken, error) {
+	body := client.RefreshTokenRequest{
+		RefreshToken: refreshToken,
+	}
+
+	token, _, err := r.client.UserAPI.V1UserTokenRefreshPost(ctx).Body(body).Execute()
+	return token, err
+}
