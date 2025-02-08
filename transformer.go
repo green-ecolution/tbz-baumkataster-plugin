@@ -1,48 +1,31 @@
 package main
 
 import (
-	"github.com/omniscale/go-proj/v2"
+	"github.com/twpayne/go-proj/v10"
 )
 
 type GeoTransformer struct {
-	from        *proj.Proj
-	to          *proj.Proj
-	transformer proj.Transformer
+	pj *proj.PJ
 }
 
-func NewGeoTransformer(from, to int) (*GeoTransformer, error) {
-	fromProj, err := proj.NewEPSG(from)
-	if err != nil {
-		return nil, err
-	}
-
-	toProj, err := proj.NewEPSG(to)
-	if err != nil {
-		return nil, err
-	}
-
-	transformer, err := proj.NewEPSGTransformer(from, to)
+func NewGeoTransformer(from, to string) (*GeoTransformer, error) {
+	pj, err := proj.NewCRSToCRS(from, to, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &GeoTransformer{
-		from:        fromProj,
-		to:          toProj,
-		transformer: transformer,
+		pj: pj,
 	}, nil
 }
 
 func (g *GeoTransformer) Transform(x, y float64) (lat, lng float64, err error) {
-	points := []proj.Coord{
-		proj.XY(x, y),
-	}
-
-	if err := g.transformer.Transform(points); err != nil {
+	coord, err := g.pj.Forward(proj.NewCoord(x, y, 0, 0))
+	if err != nil {
 		return 0, 0, err
 	}
 
-	return points[0].X, points[0].Y, nil
+	return coord.X(), coord.Y(), nil
 }
 
 type GeoPoint struct {
@@ -52,14 +35,18 @@ type GeoPoint struct {
 
 func (g *GeoTransformer) TransformBatch(points []GeoPoint) ([]GeoPoint, error) {
 	coords := Map(points, func(p GeoPoint) proj.Coord {
-		return proj.XY(p.X, p.Y)
+		return proj.NewCoord(p.X, p.Y, 0, 0)
 	})
 
-	if err := g.transformer.Transform(coords); err != nil {
+	if err := g.pj.ForwardArray(coords); err != nil {
 		return nil, err
 	}
 
 	return Map(coords, func(c proj.Coord) GeoPoint {
-		return GeoPoint{X: c.X, Y: c.Y}
+		return GeoPoint{X: c.X(), Y: c.Y()}
 	}), nil
+}
+
+func (g *GeoTransformer) Destroy() {
+	g.pj.Destroy()
 }

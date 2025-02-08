@@ -25,8 +25,8 @@ type TreeRegister struct {
 }
 
 const (
-	fromEPSG = 31467
-	toEPSG   = 4326
+	fromEPSG = "EPSG:31467"
+	toEPSG   = "EPSG:4326"
 )
 
 func TreesFromBatch(register []TreeRegister) ([]Tree, error) {
@@ -34,6 +34,7 @@ func TreesFromBatch(register []TreeRegister) ([]Tree, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer transformer.Destroy()
 
 	geoPointsSeq := MapIter12(slices.Values(register), func(r TreeRegister) (GeoPoint, error) {
 		rCoord, err := strconv.ParseFloat(strings.Replace(r.Rechtswert, ",", ".", 1), 64)
