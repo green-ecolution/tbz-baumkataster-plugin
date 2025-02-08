@@ -10,11 +10,7 @@ import (
 )
 
 const query = `
-select cast(b."OBJECTID" as int), b."BAUMNUMMER", b."HOCHWERT", b."RECHTSWERT", b."GATTUNG", b."GEBIET", b."STRASSE", c."PFLANZJAHR" from (
-  select "OBJECTID", cast("PFLANZJAHR" as int) from metadata_baum.baumkataster where "PFLANZJAHR" != 'Null'
-) as c 
-inner join metadata_baum.baumkataster as b on c."OBJECTID" = b."OBJECTID"
-where c."PFLANZJAHR" > $1;
+select "OBJECTID", "BAUMNUMMER", "HOCHWERT", "RECHTSWERT", "GATTUNG", "GEBIET", "STRASSE", "PFLANZJAHR" from metadata_baum.baumkataster where "PFLANZJAHR" > $1;
 `
 
 type TreeRegisterRepo struct {
