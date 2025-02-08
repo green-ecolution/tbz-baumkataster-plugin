@@ -4,18 +4,18 @@ go 1.23.3
 
 replace github.com/green-ecolution/green-ecolution-backend => ../green-ecolution-management/green-ecolution-backend
 
-replace github.com/green-ecolution/green-ecolution-backend/client => ../green-ecolution-management/green-ecolution-backend/pkg/client
+replace github.com/green-ecolution/green-ecolution-backend/pkg/client => ../green-ecolution-management/green-ecolution-backend/pkg/client
 
-replace github.com/green-ecolution/green-ecolution-backend/plugin => ../green-ecolution-management/green-ecolution-backend/pkg/plugin
+replace github.com/green-ecolution/green-ecolution-backend/pkg/plugin => ../green-ecolution-management/green-ecolution-backend/pkg/plugin
 
 require (
-	github.com/green-ecolution/green-ecolution-backend/client v0.0.0-00010101000000-000000000000
-	github.com/green-ecolution/green-ecolution-backend/plugin v0.0.0-00010101000000-000000000000
+	github.com/go-chi/chi/v5 v5.2.1
+	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-00010101000000-000000000000
+	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-00010101000000-000000000000
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
-	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/omniscale/go-proj/v2 v2.0.0-20221006090944-6c8a5f5a510d
+	github.com/twpayne/go-proj/v10 v10.5.0
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558
 )
 

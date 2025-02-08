@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/green-ecolution/green-ecolution-backend/client"
+	"github.com/green-ecolution/green-ecolution-backend/pkg/client"
 )
 
 type GreenEcolutionClient struct {

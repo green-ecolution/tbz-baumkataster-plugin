@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/url"
 	"os"
@@ -12,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/client"
-	"github.com/green-ecolution/green-ecolution-backend/plugin"
+	"github.com/green-ecolution/green-ecolution-backend/pkg/client"
+	"github.com/green-ecolution/green-ecolution-backend/pkg/plugin"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
@@ -21,6 +23,11 @@ import (
 const (
 	slug = "tbz-baumkataster"
 )
+
+var version = "develop"
+
+//go:embed all:ui/dist
+var f embed.FS
 
 func main() {
 	err := godotenv.Load()
@@ -53,7 +60,7 @@ func main() {
 
 	worker, err := plugin.NewPluginWorker(
 		plugin.WithHost(hostPath),
-		plugin.WithPlugin(*p),
+		plugin.WithPlugin(p),
 		plugin.WithHostAPIVersion("v1"),
 	)
 	if err != nil {
@@ -64,6 +71,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	oauthToken := &oauth2.Token{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
@@ -71,6 +79,7 @@ func main() {
 		// ExpiresIn:    token.ExpiresIn,
 		TokenType: "Bearer",
 	}
+
 	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(oauthToken))
 	clientCfg := client.NewConfiguration()
 	clientCfg.Servers = client.ServerConfigurations{
@@ -81,16 +90,9 @@ func main() {
 	}
 	clientCfg.Debug = true
 	clientCfg.HTTPClient = oauthClient
+	worker.SetClient(oauthClient)
 
 	geClient := NewGreenEcolutionRepo(clientCfg, slug)
-
-	auth := context.WithValue(ctx, client.ContextOAuth2, oauthToken)
-
-	info, err := geClient.GetInfo(auth)
-	if err != nil {
-		slog.Error("Error while getting app info", "error", err)
-	}
-	slog.Info("App info", "info", info)
 
 	dsn := os.Getenv("DB_URL")
 	repo, err := NewTreeRegisterRepo(dsn)
@@ -98,7 +100,26 @@ func main() {
 		panic(err)
 	}
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
+
+	fSub, err := fs.Sub(f, "ui/dist")
+	if err != nil {
+		panic(err)
+	}
+
+	server := NewServer(
+		WithPort(6123),
+		WithPlugin(p),
+		WithPluginFS(fSub),
+		WithVersion(version),
+	)
+
+	go func() {
+		defer wg.Done()
+		if err := server.Run(ctx); err != nil {
+			slog.Error("failed to start http server", "error", err)
+		}
+	}()
 
 	syncTrees := NewSyncTrees(repo, geClient)
 	scheduler := NewScheduler(10 * time.Second)
@@ -113,6 +134,17 @@ func main() {
 		defer wg.Done()
 		if err := worker.RunHeartbeat(ctx); err != nil {
 			slog.Error("Failed to send heartbeat", "error", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if err := worker.Unregister(timeoutCtx); err != nil {
+			slog.Error("failed to unregister plugin", "error", err)
 		}
 	}()
 

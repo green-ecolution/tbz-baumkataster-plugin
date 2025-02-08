@@ -34,6 +34,11 @@
             golangci-lint
             sqlite
             postgresql
+            pkg-config
+
+            yarn
+            nodejs_22
+            typescript
 
             gnumake
             git
