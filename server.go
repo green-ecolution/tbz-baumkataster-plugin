@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -68,16 +69,11 @@ func NewServer(opts ...ServerOption) *Server {
 func (s *Server) Run(ctx context.Context) error {
 	r := chi.NewRouter()
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World"))
-	})
+	r.Get("/", s.handleHelloWorld)
+	r.Get("/info", s.handleGetInfo)
+	r.Post("/sync", s.handleExecSync)
 
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		rctx := chi.RouteContext(r.Context())
-		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
-		fs := http.StripPrefix(pathPrefix, http.FileServerFS(s.cfg.pluginFS))
-		fs.ServeHTTP(w, r)
-	})
+	r.Get("/*", s.handleFileSystem)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", s.cfg.port),
@@ -94,4 +90,45 @@ func (s *Server) Run(ctx context.Context) error {
 	}()
 
 	return server.ListenAndServe()
+}
+
+func (s *Server) handleHelloWorld(w http.ResponseWriter, _ *http.Request) {
+	w.Write([]byte("Hello World"))
+}
+
+type info struct {
+	SyncInterval string    `json:"sync_interval"`
+	LastSync     time.Time `json:"last_sync"`
+	PluginSlug   string    `json:"slug"`
+	Version      string    `json:"version"`
+}
+
+func (s *Server) handleGetInfo(w http.ResponseWriter, _ *http.Request) {
+	cfg := ParseConfig()
+	infoResp := info{
+		SyncInterval: cfg.SyncInterval.String(),
+		LastSync:     syncTrees.lastSync,
+		PluginSlug:   cfg.PluginSlug,
+		Version:      version,
+	}
+
+	encode := json.NewEncoder(w)
+	encode.Encode(infoResp)
+}
+
+func (s *Server) handleExecSync(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if err := syncTrees.Sync(ctx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleFileSystem(w http.ResponseWriter, r *http.Request) {
+	rctx := chi.RouteContext(r.Context())
+	pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+	fs := http.StripPrefix(pathPrefix, http.FileServerFS(s.cfg.pluginFS))
+	fs.ServeHTTP(w, r)
 }

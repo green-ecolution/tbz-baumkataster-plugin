@@ -7,9 +7,8 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
-	"net/url"
-	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -20,11 +19,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	slug = "tbz-baumkataster"
+var (
+	version   = "develop"
+	slug      string
+	syncTrees *SyncTrees
 )
-
-var version = "develop"
 
 //go:embed all:ui/dist
 var f embed.FS
@@ -35,32 +34,22 @@ func main() {
 		slog.Warn("error loading .env file")
 	}
 
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	clientID := os.Getenv("CLIENT_ID")
+	cfg := ParseConfig()
+	slug = cfg.PluginSlug
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
-
-	hostPath, err := url.Parse("http://localhost:3000")
-	if err != nil {
-		panic(err)
-	}
-
-	pluginPath, err := url.Parse("http://localhost:6123")
-	if err != nil {
-		panic(err)
-	}
 
 	p := plugin.NewPlugin(
 		plugin.WithName("TBZ Baumkataster"),
 		plugin.WithDescription("Dieses Plugin ist für die Synchronisation der Bäume im TBZ Baumkataster mit den Bäumen im Green Ecolution System zuständig. Dabei wird in regelmäßigen Abständen geprüft, ob neue Bäume im Baumkataster hinzugefügt, angepasst oder entfernt wurden. Dabei werden nur Bäume innerhalb eines definierten Standjahres von bis zu drei Jahren synchronisiert."),
 		plugin.WithSlug(slug),
 		plugin.WithVersion(version),
-		plugin.WithHostPath(pluginPath),
+		plugin.WithHostPath(cfg.PluginPath),
 	)
 
 	worker, err := plugin.NewPluginWorker(
-		plugin.WithHost(hostPath),
+		plugin.WithHost(cfg.HostPath),
 		plugin.WithPlugin(p),
 		plugin.WithHostAPIVersion("v1"),
 	)
@@ -68,7 +57,7 @@ func main() {
 		panic(err)
 	}
 
-	token, err := worker.Register(ctx, clientID, clientSecret)
+	token, err := worker.Register(ctx, cfg.ClientID, cfg.ClientSecret)
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +68,7 @@ func main() {
 	clientCfg := client.NewConfiguration()
 	clientCfg.Servers = client.ServerConfigurations{
 		{
-			URL:         fmt.Sprintf("%s/api", hostPath),
+			URL:         fmt.Sprintf("%s/api", cfg.HostPath),
 			Description: "Green Ecolution API",
 		},
 	}
@@ -88,11 +77,12 @@ func main() {
 
 	geClient := NewGreenEcolutionRepo(clientCfg, slug)
 
-	dsn := os.Getenv("DB_URL")
-	repo, err := NewTreeRegisterRepo(dsn)
+	repo, err := NewTreeRegisterRepo(cfg.DbURL)
 	if err != nil {
 		panic(err)
 	}
+
+	syncTrees = NewSyncTrees(repo, geClient)
 	var wg sync.WaitGroup
 	wg.Add(4)
 
@@ -101,8 +91,16 @@ func main() {
 		panic(err)
 	}
 
+	var serverPort int
+	if cfg.PluginPath.Port() != "" {
+		serverPort, err = strconv.Atoi(cfg.PluginPath.Port())
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	server := NewServer(
-		WithPort(6123),
+		WithPort(serverPort),
 		WithPlugin(p),
 		WithPluginFS(fSub),
 		WithVersion(version),
@@ -115,8 +113,7 @@ func main() {
 		}
 	}()
 
-	syncTrees := NewSyncTrees(repo, geClient)
-	scheduler := NewScheduler(10 * time.Second)
+	scheduler := NewScheduler(cfg.SyncInterval)
 	go func() {
 		defer wg.Done()
 		if err := scheduler.Run(ctx, syncTrees.Sync); err != nil {

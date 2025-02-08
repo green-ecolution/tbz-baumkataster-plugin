@@ -4,11 +4,13 @@ import (
 	"context"
 	"log/slog"
 	"slices"
+	"time"
 )
 
 type SyncTrees struct {
 	registerRepo *TreeRegisterRepo
 	client       *GreenEcolutionClient
+	lastSync     time.Time
 }
 
 func NewSyncTrees(repo *TreeRegisterRepo, client *GreenEcolutionClient) *SyncTrees {
@@ -107,6 +109,7 @@ func (s *SyncTrees) Sync(ctx context.Context) error {
 		}
 	}
 
+	s.lastSync = time.Now()
 	return nil
 }
 
