@@ -22,6 +22,7 @@ import (
 var (
 	version   = "develop"
 	slug      string
+	cfg       Config
 	syncTrees *SyncTrees
 )
 
@@ -34,7 +35,7 @@ func main() {
 		slog.Warn("error loading .env file")
 	}
 
-	cfg := ParseConfig()
+	cfg = ParseConfig()
 	slug = cfg.PluginSlug
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -57,13 +58,7 @@ func main() {
 		panic(err)
 	}
 
-	token, err := worker.Register(ctx, cfg.ClientID, cfg.ClientSecret)
-	if err != nil {
-		panic(err)
-	}
-
-	oauthClient := authClient(ctx, token)
-	worker.SetClient(oauthClient)
+	oauthClient := authClient(ctx, worker)
 
 	clientCfg := client.NewConfiguration()
 	clientCfg.Servers = client.ServerConfigurations{
@@ -142,13 +137,18 @@ func main() {
 	wg.Wait()
 }
 
-func authClient(ctx context.Context, token *plugin.Token) *http.Client {
+func authClient(ctx context.Context, worker *plugin.PluginWorker) *http.Client {
+	token, err := worker.Register(ctx, cfg.ClientID, cfg.ClientSecret)
+	if err != nil {
+		panic(err)
+	}
+
 	oauthToken := &oauth2.Token{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		Expiry:       token.Expiry,
-		TokenType:    "Bearer",
+		TokenType:    token.TokenType,
 	}
 
-	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(oauthToken))
+	return oauth2.NewClient(ctx, NewTokenSource(worker.RefreshToken, oauthToken))
 }
