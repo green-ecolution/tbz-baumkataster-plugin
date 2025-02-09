@@ -11,8 +11,8 @@ replace github.com/green-ecolution/green-ecolution-backend/pkg/plugin => ../gree
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.1
-	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-00010101000000-000000000000
-	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-00010101000000-000000000000
+	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250209115344-464b7b322420
+	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250209115344-464b7b322420
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
@@ -23,7 +23,7 @@ require (
 require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/green-ecolution/green-ecolution-backend v1.0.0 // indirect
+	github.com/green-ecolution/green-ecolution-backend v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
