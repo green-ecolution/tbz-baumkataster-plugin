@@ -1,0 +1,12 @@
+# https://kubernetes.io/docs/concepts/configuration/configmap/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugin-config
+data:
+  GE_SYNC_INTERVAL: 10s
+  GE_PLUGIN_SLUG: tbz-baumkataster
+  GE_HOST_PATH: http://backend.green-ecolution-dev.svc.cluster.local
+  GE_PLUGIN_PATH: http://tbz-baumkataster-plugin.plugin.svc.cluster.local:6123
+  GE_CLIENT_ID: tbz-baumkataster-plugin
+

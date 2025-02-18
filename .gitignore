@@ -1,3 +1,4 @@
 .env
 .pre-commit-config.yaml
 ui/.__mf__temp/tbz_mf_2_baumkataster
+deploy/kustomize/secrets.yaml

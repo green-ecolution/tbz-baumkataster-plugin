@@ -1,0 +1,61 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tbz-plugin
+  labels:
+    app: tbz-plugin
+spec:
+  selector:
+    matchLabels:
+      app: tbz-plugin
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container:  tbz-plugin
+      labels:
+        app: tbz-plugin
+    spec:
+      containers:
+      - name: tbz-plugin
+        image: plugin-image
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        livenessProbe:
+          tcpSocket:
+            port: 6123 
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 6123 
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        envFrom:
+          - configMapRef:
+              name: plugin-config
+          - secretRef:
+              name: plugin-secret
+        ports:
+        - containerPort: 6123
+          name: tbz-plugin
+      restartPolicy: Always
+
