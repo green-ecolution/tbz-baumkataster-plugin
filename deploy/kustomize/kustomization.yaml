@@ -7,6 +7,6 @@ resources:
 images:
 - name: plugin-image
   newName: ghcr.io/green-ecolution/tbz-baumkataster-plugin
-  newTag: d60743f
+  newTag: 326175e
 generators:
 - ./secret-generator.yaml
