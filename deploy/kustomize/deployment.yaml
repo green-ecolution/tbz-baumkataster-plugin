@@ -2,25 +2,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tbz-plugin
+  name: tbz-treeregister
   labels:
-    app: tbz-plugin
+    app: tbz-treeregister
 spec:
   selector:
     matchLabels:
-      app: tbz-plugin
+      app: tbz-treeregister
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
       annotations:
-        kubectl.kubernetes.io/default-container:  tbz-plugin
+        kubectl.kubernetes.io/default-container:  tbz-treeregister
       labels:
-        app: tbz-plugin
+        app: tbz-treeregister
     spec:
       containers:
-      - name: tbz-plugin
+      - name: tbz-treeregister
         image: plugin-image
         imagePullPolicy: IfNotPresent
         resources:
@@ -53,6 +53,5 @@ spec:
               name: plugin-secret
         ports:
         - containerPort: 6123
-          name: tbz-plugin
       restartPolicy: Always
 
