@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -86,16 +85,8 @@ func main() {
 		panic(err)
 	}
 
-	var serverPort int
-	if cfg.PluginPath.Port() != "" {
-		serverPort, err = strconv.Atoi(cfg.PluginPath.Port())
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	server := NewServer(
-		WithPort(serverPort),
+		WithPort(cfg.PluginPort),
 		WithPlugin(p),
 		WithPluginFS(fSub),
 		WithVersion(version),
