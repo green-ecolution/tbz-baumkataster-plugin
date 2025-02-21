@@ -38,3 +38,27 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ghcr.io/${{ github.repository }}:latest, ghcr.io/${{ github.repository }}:${{ env.COMMIT_SHA }}
+
+      - name: Setup kube tools
+        uses: yokawasa/action-setup-kube-tools@v0.11.1
+        with:
+          setup-tools: |
+            kustomize
+          kustomize: "5.4.3"
+
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+
+      - name: Bump frontend image tag
+        run: |
+          cd ./deploy/kustomize 
+          kustomize edit set image plugin-image=ghcr.io/green-ecolution/tbz-baumkataster-plugin:${{ env.COMMIT_SHA }}
+
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+        run: |
+          git add deploy/kustomize/kustomization.yaml
+          git commit -m "chore: update submodules and dump image tag to ${{ env.COMMIT_SHA }}" && git push origin develop || echo "No changes to commit"
