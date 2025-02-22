@@ -30,27 +30,6 @@ interface PluginServerInfo {
 }
 
 const ControlPanel = () => {
-  const { data } = useSuspenseQuery<PluginServerInfo>({
-    queryKey: ['info'],
-    queryFn: async () => {
-      return fetch("/api-local/v1/plugin/tbz-baumkataster/info")
-        .then(res => {
-          if (res.status >= 400) {
-            throw res.json()
-          }
-          return res.json()
-        })
-        .then(data => ({
-          syncInterval: data.sync_interval,
-          lastSync: new Date(data.last_sync),
-          slug: data.slug,
-          version: data.version,
-          managedTrees: data.total_managed_trees,
-          description: data.description
-        }))
-    }
-  })
-
   const syncMutation = useMutation({
     mutationFn: async () => {
       return fetch("/api-local/v1/plugin/tbz-baumkataster/sync", {
@@ -87,6 +66,28 @@ const ControlPanel = () => {
     },
   })
 
+  const { data } = useSuspenseQuery<PluginServerInfo>({
+    queryKey: ['info'],
+    refetchInterval: syncMutation.isPending || resetMutation.isPending ? 200 : false,
+    queryFn: async () => {
+      return fetch("/api-local/v1/plugin/tbz-baumkataster/info")
+        .then(res => {
+          if (res.status >= 400) {
+            throw res.json()
+          }
+          return res.json()
+        })
+        .then(data => ({
+          syncInterval: data.sync_interval,
+          lastSync: new Date(data.last_sync),
+          slug: data.slug,
+          version: data.version,
+          managedTrees: data.total_managed_trees,
+          description: data.description
+        }))
+    }
+  })
+
   return (
     <main className="flex-1 lg:pl-20">
       <div className="container mt-6">
@@ -101,8 +102,8 @@ const ControlPanel = () => {
             <div className="flex flex-wrap gap-4 items-center mb-4">
               <PrimaryButton onClick={() => syncMutation.mutate()}>
                 <RefreshCw className={syncMutation.isPending ? "animate-spin" : ""} />
-                <span className="font-medium text-base">Sync manuell</span>
-              </PrimaryButton >
+                <span className="font-medium text-base">Synchronisieren</span>
+              </PrimaryButton>
 
               <PrimaryButton isDanger onClick={() => resetMutation.mutate()}>
                 {resetMutation.isPending ? <RefreshCw className="animate-spin" /> : <Trash2 />}
@@ -138,9 +139,6 @@ const ControlPanel = () => {
             </Card>
           </li>
         </ul>
-
-
-
       </div>
     </main>
   )
