@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider, useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { Suspense } from "react"
+import PrimaryButton from "./components/PrimaryButton"
+import { RefreshCw } from "lucide-react"
 
 const queryClient = new QueryClient()
 
@@ -64,9 +66,11 @@ const ControlPanel = () => {
 
   return (
     <>
-      <button onClick={() => mutation.mutate()}>
-        Sync manuell
-      </button>
+      <PrimaryButton onClick={() => mutation.mutate()}>
+        <RefreshCw className={mutation.isPending ? "animate-spin" : ""} />
+        <span className="font-medium text-base">Sync manuell</span>
+
+      </PrimaryButton>
 
       <p>Last Sync: {data.lastSync.toLocaleString()}</p>
     </>
