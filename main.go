@@ -25,6 +25,8 @@ var (
 	syncTrees *SyncTrees
 )
 
+const description = "Dieses Plugin ist für die Synchronisation der Bäume im TBZ Baumkataster mit den Bäumen im Green Ecolution System zuständig. Dabei wird in regelmäßigen Abständen geprüft, ob neue Bäume im Baumkataster hinzugefügt, angepasst oder entfernt wurden. Dabei werden nur Bäume innerhalb eines definierten Standjahres von bis zu drei Jahren synchronisiert."
+
 //go:embed all:ui/dist
 var f embed.FS
 
@@ -42,7 +44,7 @@ func main() {
 
 	p := plugin.NewPlugin(
 		plugin.WithName("TBZ Baumkataster"),
-		plugin.WithDescription("Dieses Plugin ist für die Synchronisation der Bäume im TBZ Baumkataster mit den Bäumen im Green Ecolution System zuständig. Dabei wird in regelmäßigen Abständen geprüft, ob neue Bäume im Baumkataster hinzugefügt, angepasst oder entfernt wurden. Dabei werden nur Bäume innerhalb eines definierten Standjahres von bis zu drei Jahren synchronisiert."),
+		plugin.WithDescription(description),
 		plugin.WithSlug(slug),
 		plugin.WithVersion(version),
 		plugin.WithHostPath(cfg.PluginPath),

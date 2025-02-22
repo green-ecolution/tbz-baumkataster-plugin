@@ -72,6 +72,7 @@ func (s *Server) Run(ctx context.Context) error {
 	r.Get("/", s.handleHelloWorld)
 	r.Get("/info", s.handleGetInfo)
 	r.Post("/sync", s.handleExecSync)
+	r.Post("/reset", s.handleExecReset)
 
 	r.Get("/*", s.handleFileSystem)
 
@@ -97,19 +98,23 @@ func (s *Server) handleHelloWorld(w http.ResponseWriter, _ *http.Request) {
 }
 
 type info struct {
-	SyncInterval string    `json:"sync_interval"`
-	LastSync     time.Time `json:"last_sync"`
-	PluginSlug   string    `json:"slug"`
-	Version      string    `json:"version"`
+	SyncInterval      string    `json:"sync_interval"`
+	LastSync          time.Time `json:"last_sync"`
+	PluginSlug        string    `json:"slug"`
+	Version           string    `json:"version"`
+	TotalManagedTrees int       `json:"total_managed_trees"`
+	Description       string    `json:"description"`
 }
 
 func (s *Server) handleGetInfo(w http.ResponseWriter, _ *http.Request) {
 	cfg := ParseConfig()
 	infoResp := info{
-		SyncInterval: cfg.SyncInterval.String(),
-		LastSync:     syncTrees.lastSync,
-		PluginSlug:   cfg.PluginSlug,
-		Version:      version,
+		SyncInterval:      cfg.SyncInterval.String(),
+		LastSync:          syncTrees.lastSync,
+		PluginSlug:        cfg.PluginSlug,
+		Version:           version,
+		TotalManagedTrees: syncTrees.managedTrees,
+		Description:       description,
 	}
 
 	encode := json.NewEncoder(w)
@@ -119,6 +124,16 @@ func (s *Server) handleGetInfo(w http.ResponseWriter, _ *http.Request) {
 func (s *Server) handleExecSync(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if err := syncTrees.Sync(ctx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleExecReset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if err := syncTrees.Reset(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

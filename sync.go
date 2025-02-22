@@ -11,6 +11,7 @@ type SyncTrees struct {
 	registerRepo *TreeRegisterRepo
 	client       *GreenEcolutionClient
 	lastSync     time.Time
+	managedTrees int
 }
 
 func NewSyncTrees(repo *TreeRegisterRepo, client *GreenEcolutionClient) *SyncTrees {
@@ -39,6 +40,7 @@ func (s *SyncTrees) Sync(ctx context.Context) error {
 		slog.Error("failed to get trees from green ecolution backend", "error", err)
 		return nil
 	}
+	s.managedTrees = len(geTrees)
 
 	slices.SortFunc(mapRegisterTrees, func(a Tree, b Tree) int {
 		return a.TreeRegisterID - b.TreeRegisterID
@@ -95,6 +97,7 @@ func (s *SyncTrees) Sync(ctx context.Context) error {
 		if err := s.client.Create(ctx, e); err != nil {
 			slog.Warn("failed to create tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID)
 		}
+		s.managedTrees++
 	}
 
 	for _, e := range updateQueue {
@@ -107,9 +110,28 @@ func (s *SyncTrees) Sync(ctx context.Context) error {
 		if err := s.client.Archive(ctx, e.Id); err != nil {
 			slog.Warn("failed to archive tree in green ecolution backend", "error", err, "register_id", e.TreeRegisterID, "tree_id", e.Id)
 		}
+		s.managedTrees--
 	}
 
 	s.lastSync = time.Now()
+	return nil
+}
+
+func (s *SyncTrees) Reset(ctx context.Context) error {
+	slog.Info("resetting all managed trees from this plugin in green ecolution backend")
+	geTrees, err := s.client.GetAll(ctx)
+	if err != nil {
+		slog.Error("failed to get trees from green ecolution backend", "error", err)
+		return nil
+	}
+
+	for _, t := range geTrees {
+		if err := s.client.Archive(ctx, t.Id); err != nil {
+			slog.Warn("failed to archive tree in green ecolution backend", "error", err, "register_id", t.TreeRegisterID, "tree_id", t.Id)
+		}
+		s.managedTrees--
+	}
+
 	return nil
 }
 
