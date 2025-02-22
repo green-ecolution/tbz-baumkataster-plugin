@@ -91,7 +91,6 @@ func (r *GreenEcolutionClient) Create(ctx context.Context, tree Tree) error {
 		Longitude:    float32(tree.Longitude),
 		Number:       tree.Number,
 		PlantingYear: tree.PlantingYear,
-		Readonly:     true,
 		Species:      tree.Species,
 		Provider:     &r.provider,
 		AdditionalInformation: map[string]interface{}{
@@ -110,7 +109,6 @@ func (r *GreenEcolutionClient) Update(ctx context.Context, id int32, tree Tree) 
 		Longitude:    float32(tree.Longitude),
 		Number:       tree.Number,
 		PlantingYear: tree.PlantingYear,
-		Readonly:     true,
 		Species:      tree.Species,
 		Provider:     &r.provider,
 		AdditionalInformation: map[string]interface{}{

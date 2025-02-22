@@ -1,12 +1,14 @@
 module github.com/green-ecolution/tbz-baumkataster-plugin
 
-go 1.23.6
+go 1.24
+
+toolchain go1.24.0
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.1
-	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250218173101-6361ae00d5ed
-	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250218173101-6361ae00d5ed
+	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250221192758-6741c063cf40
+	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250221192758-6741c063cf40
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
