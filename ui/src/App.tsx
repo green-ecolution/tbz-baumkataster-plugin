@@ -5,6 +5,7 @@ import { RefreshCw, Trash2 } from "lucide-react"
 import Card from "./components/Card"
 
 const queryClient = new QueryClient()
+const baseUrl = import.meta.env.VITE_BASE_URL ?? "api-local/v1";
 
 function App() {
   return (
@@ -32,7 +33,7 @@ interface PluginServerInfo {
 const ControlPanel = () => {
   const syncMutation = useMutation({
     mutationFn: async () => {
-      return fetch("/api-local/v1/plugin/tbz-baumkataster/sync", {
+      return fetch(`/${baseUrl}/plugin/tbz-baumkataster/sync`, {
         method: "POST"
       }).then(res => {
         if (res.status >= 400) {
@@ -50,7 +51,7 @@ const ControlPanel = () => {
 
   const resetMutation = useMutation({
     mutationFn: async () => {
-      return fetch("/api-local/v1/plugin/tbz-baumkataster/reset", {
+      return fetch(`/${baseUrl}/plugin/tbz-baumkataster/reset`, {
         method: "POST"
       }).then(res => {
         if (res.status >= 400) {
@@ -70,7 +71,7 @@ const ControlPanel = () => {
     queryKey: ['info'],
     refetchInterval: syncMutation.isPending || resetMutation.isPending ? 200 : false,
     queryFn: async () => {
-      return fetch("/api-local/v1/plugin/tbz-baumkataster/info")
+      return fetch(`/${baseUrl}/plugin/tbz-baumkataster/info`)
         .then(res => {
           if (res.status >= 400) {
             throw res.json()

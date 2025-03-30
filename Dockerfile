@@ -6,6 +6,7 @@ RUN yarn --frozen-lockfile
 
 COPY ./ui .
 
+ENV VITE_BASE_URL=api/v1
 RUN yarn build
 
 FROM golang:1.24-alpine AS builder
