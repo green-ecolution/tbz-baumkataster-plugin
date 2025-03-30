@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -98,6 +99,7 @@ func main() {
 		defer wg.Done()
 		if err := server.Run(ctx); err != nil {
 			slog.Error("failed to start http server", "error", err)
+			cleanup(worker)
 		}
 	}()
 
@@ -106,6 +108,7 @@ func main() {
 		defer wg.Done()
 		if err := scheduler.Run(ctx, syncTrees.Sync); err != nil {
 			slog.Error("an error has occurred in syncing trees from tbz tree register to green ecolution backend", "error", err)
+			cleanup(worker)
 		}
 	}()
 
@@ -113,19 +116,14 @@ func main() {
 		defer wg.Done()
 		if err := worker.RunHeartbeat(ctx); err != nil {
 			slog.Error("Failed to send heartbeat", "error", err)
-			panic(err)
+			cleanup(worker)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-
-		if err := worker.Unregister(timeoutCtx); err != nil {
-			slog.Error("failed to unregister plugin", "error", err)
-		}
+		cleanup(worker)
 	}()
 
 	wg.Wait()
@@ -145,4 +143,15 @@ func authClient(ctx context.Context, worker *plugin.PluginWorker) *http.Client {
 	}
 
 	return oauth2.NewClient(ctx, NewTokenSource(worker.RefreshToken, oauthToken))
+}
+
+func cleanup(worker *plugin.PluginWorker) {
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := worker.Unregister(timeoutCtx); err != nil {
+		slog.Error("failed to unregister plugin", "error", err)
+	}
+
+	os.Exit(1)
 }
