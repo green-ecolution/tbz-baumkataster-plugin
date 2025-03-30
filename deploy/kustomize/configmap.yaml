@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: plugin-config
+  name: tbz-treeregister-config
 data:
-  GE_SYNC_INTERVAL: 10s
+  GE_SYNC_INTERVAL: 30m
   GE_PLUGIN_SLUG: tbz-baumkataster
-  GE_HOST_PATH: backend
-  GE_PLUGIN_PATH: tbz-treeregister
+  GE_HOST_PATH: http://backend
+  GE_PLUGIN_PATH: http://tbz-treeregister
   GE_PLUGIN_PORT: "6123"
   GE_CLIENT_ID: tbz-baumkataster-plugin
 
