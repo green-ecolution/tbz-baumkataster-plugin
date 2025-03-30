@@ -113,6 +113,7 @@ func main() {
 		defer wg.Done()
 		if err := worker.RunHeartbeat(ctx); err != nil {
 			slog.Error("Failed to send heartbeat", "error", err)
+			panic(err)
 		}
 	}()
 
