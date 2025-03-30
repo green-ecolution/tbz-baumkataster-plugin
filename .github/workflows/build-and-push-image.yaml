@@ -54,7 +54,7 @@ jobs:
       - name: Bump frontend image tag
         run: |
           cd ./deploy/kustomize 
-          kustomize edit set image plugin-image=ghcr.io/green-ecolution/tbz-baumkataster-plugin:${{ env.COMMIT_SHA }}
+          kustomize edit set image plugin-image=ghcr.io/${{ github.repository }}:${{ env.COMMIT_SHA }}
 
       - name: Commit changes
         env:
