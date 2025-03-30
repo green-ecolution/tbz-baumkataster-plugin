@@ -55,6 +55,8 @@ func main() {
 		plugin.WithHost(cfg.HostPath),
 		plugin.WithPlugin(p),
 		plugin.WithHostAPIVersion("v1"),
+		plugin.WithClientID(cfg.ClientID),
+		plugin.WithClientSecret(cfg.ClientSecret),
 	)
 	if err != nil {
 		panic(err)
@@ -130,7 +132,7 @@ func main() {
 }
 
 func authClient(ctx context.Context, worker *plugin.PluginWorker) *http.Client {
-	token, err := worker.Register(ctx, cfg.ClientID, cfg.ClientSecret)
+	token, err := worker.Register(ctx)
 	if err != nil {
 		panic(err)
 	}

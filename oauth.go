@@ -12,12 +12,12 @@ import (
 var _ oauth2.TokenSource = (*TokenSource)(nil)
 
 type TokenSource struct {
-	refreshTokenFn func(context.Context, string, string) (*plugin.Token, error)
+	refreshTokenFn func(context.Context) (*plugin.Token, error)
 	token          *oauth2.Token
 }
 
 func NewTokenSource(
-	refreshTokenFn func(context.Context, string, string) (*plugin.Token, error),
+	refreshTokenFn func(context.Context) (*plugin.Token, error),
 	initToken *oauth2.Token,
 ) *TokenSource {
 	return &TokenSource{
@@ -29,7 +29,7 @@ func NewTokenSource(
 func (t *TokenSource) Token() (*oauth2.Token, error) {
 	if t.token.Expiry.Before(time.Now()) {
 		slog.Info("refresh token")
-		newToken, err := t.refreshTokenFn(context.Background(), cfg.ClientID, cfg.ClientSecret)
+		newToken, err := t.refreshTokenFn(context.Background())
 		if err != nil {
 			return nil, err
 		}
