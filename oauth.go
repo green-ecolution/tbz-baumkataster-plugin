@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/pkg/plugin"
+	"github.com/green-ecolution/backend/pkg/plugin"
 	"golang.org/x/oauth2"
 )
 

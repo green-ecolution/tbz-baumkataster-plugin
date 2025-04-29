@@ -108,10 +108,10 @@ github.com/google/pprof v0.0.0-20200708004538-1a94d8640e99/go.mod h1:ZgVRPoUq/hf
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
-github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250330212018-c8c14f92abe1 h1:zP9kBs4RjSn90+3GwbqsUfEDOV+kuSNE4Hwr2b3kGZs=
-github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250330212018-c8c14f92abe1/go.mod h1:B9nvxvLIz/J2sQ8B5lk3r5+KqGPqWtAUuLF+R0O0oXs=
-github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250330212018-c8c14f92abe1 h1:iQcDb4gunxUp9WQZgx9oilx1cOsl0j4bRGZJE3jzs/U=
-github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250330212018-c8c14f92abe1/go.mod h1:kwKzgwmJ/7ClHGPnFwi6EBl+cTlHgIFrNPT1Br1tiUQ=
+github.com/green-ecolution/backend/pkg/client v0.0.0-20250428210859-97f2a826f4b7 h1:cTLJQyHBEG/l5EFd4kSRPnv1irjk0BzPeNwfcDRrLeo=
+github.com/green-ecolution/backend/pkg/client v0.0.0-20250428210859-97f2a826f4b7/go.mod h1:aubjmT4PJXTYwU1Xdtfoo5IgzsZwjtF0eg17VjOz9f0=
+github.com/green-ecolution/backend/pkg/plugin v0.0.0-20250428210859-97f2a826f4b7 h1:0cEEVXE7NtJREs/gjWo8ccTERogWeezWOohdLcPGSL8=
+github.com/green-ecolution/backend/pkg/plugin v0.0.0-20250428210859-97f2a826f4b7/go.mod h1:st7UIMJtrS46XiOv9TBWm138jWgHsFcjYURutPUEeK8=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=

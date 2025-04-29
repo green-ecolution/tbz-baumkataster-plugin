@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/green-ecolution/green-ecolution-backend/pkg/plugin"
+	"github.com/green-ecolution/backend/pkg/plugin"
 )
 
 type ServerConfig struct {

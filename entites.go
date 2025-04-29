@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/green-ecolution/green-ecolution-backend/pkg/client"
+	"github.com/green-ecolution/backend/pkg/client"
 )
 
 type Tree struct {

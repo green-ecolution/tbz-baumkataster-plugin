@@ -7,8 +7,8 @@ toolchain go1.24.0
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.1
-	github.com/green-ecolution/green-ecolution-backend/pkg/client v0.0.0-20250330212018-c8c14f92abe1
-	github.com/green-ecolution/green-ecolution-backend/pkg/plugin v0.0.0-20250330212018-c8c14f92abe1
+	github.com/green-ecolution/backend/pkg/client v0.0.0-20250428210859-97f2a826f4b7
+	github.com/green-ecolution/backend/pkg/plugin v0.0.0-20250428210859-97f2a826f4b7
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

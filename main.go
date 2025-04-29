@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/pkg/client"
-	"github.com/green-ecolution/green-ecolution-backend/pkg/plugin"
+	"github.com/green-ecolution/backend/pkg/client"
+	"github.com/green-ecolution/backend/pkg/plugin"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
